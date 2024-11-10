@@ -22,7 +22,7 @@ def search_books(query):
     params = {
         'q': query,
         'key': GOOGLE_BOOKS_API_KEY,
-        'maxResults': 5
+        'maxResults': 10
     }
     response = requests.get(url, params=params)
     return response.json()
@@ -78,6 +78,12 @@ def favorite_books():
         if 'items' in book_data:
             favorite_books_data.append(book_data['items'][0])  # Add the first item if found
     return jsonify({"favorite_books": favorite_books_data})
+
+@app.after_request
+def after_request(response):
+    response.headers["Cache-Control"] = "no-store, max-age=0"
+    return response
+
 
 # Run the app
 if __name__ == "__main__":

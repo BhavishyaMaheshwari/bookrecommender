@@ -3,9 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <title>Book Recommendation System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://kit.fontawesome.com/89a66043fb.js" crossorigin="anonymous"></script>
 </head>
 <body>
-    <h1>Search for Books</h1>
+    <div class="w-screen h-screen bg-gray-100 py-10">
+        <div class="relative w-1/2 m-auto min-h-[500px] bg-gray-50 p-5 rounded-lg shadow-sm">
+            <h1 class="text-center text-4xl font-bold">Book Recommendation System</h1>
+
+            <div class="flex justify-center mt-4 w-[90%] m-auto gap-2">
+                <form id="searchBar" class="flex border-2 border-gray-200 bg-white w-full rounded-md">
+                    <input type="text" id="query" placeholder="Enter book title or author" class="p-2 px-4 rounded-md flex-1 focus:outline-none focus:border-blue-500" required>
+                    <button type="submit" class="flex items-center justify-center rounedd-md bg-white px-4 py-2 mx-1"><i class="fa fa-search" aria-hidden="true"></i></button>
+                </form>
+                <button class="flex items-center justify-between gap-2 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600" ><i class="fa fa-heart-o" aria-hidden="true"></i></button>
+                <button class="flex items-center justify-between gap-2 bg-pink-500 text-white px-4 py-2 rounded-md hover:bg-pink-600" ><i class="fa fa-bookmark-o" aria-hidden="true"></i></button>
+
+            </div>
+
+            <div id="results" class="relative mt-4 w-[90%]  m-auto">
+                <h1 id="searchText" class="text-xl font-bold mb-2 mt-6">Search Results for: </h1>
+                <ul id="result-box" class="max-h-[70vh] overflow-auto">
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!-- <h1>Search for Books</h1>
     <form id="searchForm">
         <input type="text" id="query" placeholder="Enter book title or author" required>
         <button type="submit">Search</button>
@@ -17,112 +40,143 @@
 
     <div id="results"></div>
     <div id="likedBooks"></div>
-    <div id="favoriteBooks"></div>
+    <div id="favoriteBooks"></div> -->
 
     <script>
         // Function to handle search form submission
-        document.getElementById('searchForm').addEventListener('submit', async function(event) {
+        document.querySelector('#searchBar').addEventListener('submit', async function(event) {
             event.preventDefault();
             const query = document.getElementById('query').value;
+            document.querySelector("#searchText").innerHTML = `Search Results for: ${query}`;
             const response = await fetch(`/search?query=${query}`);
             const data = await response.json();
+            console.log(data);
+            
             displayResults(data);
         });
 
         // Function to display search results
         function displayResults(data) {
-            const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = '';
+            const resultBox = document.querySelector('#result-box');
+            resultBox.innerHTML = '';
             if (data.items) {
-                data.items.forEach(book => {
-                    const bookDiv = document.createElement('div');
-                    bookDiv.innerHTML = `
-                        <h3>${book.volumeInfo.title}</h3>
-                        <p>Author: ${book.volumeInfo.authors ? book.volumeInfo.authors.join(', ') : 'N/A'}</p>
-                        <p>Liked: ${book.liked ? 'Yes' : 'No'}</p>
-                        <p>Favorite: ${book.favorite ? 'Yes' : 'No'}</p>
-                        <button onclick="likeBook('${book.id}')">${book.liked ? 'Unlike' : 'Like'}</button>
-                        <button onclick="favoriteBook('${book.id}')">${book.favorite ? 'Unfavorite' : 'Favorite'}</button>
-                    `;
-                    resultsDiv.appendChild(bookDiv);
-                });
+                data.items.forEach(({volumeInfo, accessInfo, id, liked, favorite}) => {
+                    const bookItem = document.createElement('li')
+                    bookItem.setAttribute('class', 'my-2')
+                    bookItem.innerHTML = `
+                            <div class="flex border-b-2 py-2">
+                                <img class="w-[180px] h-[180px] object-contain" src="${volumeInfo.imageLinks.smallThumbnail}" alt="${volumeInfo.title}">
+                                <div class="flex flex-1 justify-start relative">
+                                    <div class="content flex-1 relative">
+                                        <h2 class="font-semibold text-[25px] leading-none text-wrap max-w-[80%]">${volumeInfo.title}</h2>
+                                        <p class="font-medium text-[15px] text-[#464646] mb-2">${
+                                            volumeInfo.authors.join(', ')
+                                            }</p>
+                                        <div class="flex gap-1  flex-wrap">
+                                            ${
+                                                volumeInfo['categories'] ?
+                                                    volumeInfo.categories.map(category => `<span class="bg-pink-500 rounded-[10pc] px-[9px] py-[2px] text-[13px] text-white">${category}</span>`)
+                                                    : `<span class="bg-red-500 rounded-[10pc] px-[9px] py-[2px] text-[13px] text-white">No Category Found</span>`
+                                                   
+                                            }
+                                        </div>
+                                        <p class="text-[15px] mt-2">${volumeInfo.description ? volumeInfo.description.slice(0, 150) + '...' : "No Description"}</p>
+                                        <div class="flex gap-2 mt-2">
+                                            <button class="flex items-center gap-2 bg-blue-500 px-4 py-2 text-white rounded-md hover:bg-blue-600" ><i class="fa fa-heart-o" aria-hidden="true"></i>Like</button>
+                                            <button class="flex items-center gap-2 bg-pink-500 px-4 py-2 text-white rounded-md hover:bg-pink-600" ><i class="fa fa-bookmark-o" aria-hidden="true"></i>Read Later</button>
+                                        </div>
+                                    </div>
+                                    <div class="absolute top-0 right-0 flex gap-2">
+                                        <a href="${accessInfo.webReaderLink}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 bg-gray-200 w-[40px] h-[40px] text-white rounded-[50%] hover:bg-gray-300" >
+                                            <i class="fa-brands fa-google-play text-black"></i>
+                                        </a>
+                                        <a href="${volumeInfo.infoLink}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 bg-gray-200 w-[40px] h-[40px] text-white rounded-[50%] hover:bg-gray-300" >
+                                            <i class="fa-solid fa-book text-black"></i>
+                                        </a>
+                                    </div>
+                                    
+                                </div>
+                            </div>
+                    `
+                    resultBox.appendChild(bookItem)
+                })
             } else {
-                resultsDiv.innerHTML = '<p>No results found.</p>';
+                resultBox.innerHTML = '<p>No results found.</p>';
             }
         }
         
 
-        // Function to like a book
-        async function likeBook(bookId) {
-            await fetch('/like', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ book_id: bookId })
-            });
-            alert('Book liked!');
-            // Refresh the results to show updated like status
-            const query = document.getElementById('query').value;
-            const response = await fetch(`/search?query=${query}`);
-            const data = await response.json();
-            displayResults(data);
-        }
+        // // Function to like a book
+        // async function likeBook(bookId) {
+        //     await fetch('/like', {
+        //         method: 'POST',
+        //         headers: { 'Content-Type': 'application/json' },
+        //         body: JSON.stringify({ book_id: bookId })
+        //     });
+        //     alert('Book liked!');
+        //     // Refresh the results to show updated like status
+        //     const query = document.getElementById('query').value;
+        //     const response = await fetch(`/search?query=${query}`);
+        //     const data = await response.json();
+        //     displayResults(data);
+        // }
 
-        // Function to favorite a book
-        async function favoriteBook(bookId) {
-            await fetch('/favorite', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ book_id: bookId })
-            });
-            alert('Book added to favorites!');
-            // Refresh the results to show updated favorite status
-            const query = document.getElementById('query').value;
-            const response = await fetch(`/search?query=${query}`);
-            const data = await response.json();
-            displayResults(data);
-        }
+        // // Function to favorite a book
+        // async function favoriteBook(bookId) {
+        //     await fetch('/favorite', {
+        //         method: 'POST',
+        //         headers: { 'Content-Type': 'application/json' },
+        //         body: JSON.stringify({ book_id: bookId })
+        //     });
+        //     alert('Book added to favorites!');
+        //     // Refresh the results to show updated favorite status
+        //     const query = document.getElementById('query').value;
+        //     const response = await fetch(`/search?query=${query}`);
+        //     const data = await response.json();
+        //     displayResults(data);
+        // }
 
-        // Function to view liked books
-        async function viewLikedBooks() {
-            const response = await fetch('/liked_books');
-            const data = await response.json();
-            displayLikedBooks(data);
-        }
+        // // Function to view liked books
+        // async function viewLikedBooks() {
+        //     const response = await fetch('/liked_books');
+        //     const data = await response.json();
+        //     displayLikedBooks(data);
+        // }
 
-        // Function to display liked books
-        function displayLikedBooks(data) {
-            const likedBooksDiv = document.getElementById('likedBooks');
-            likedBooksDiv.innerHTML = '<h2>Liked Books</h2>';
-            data.liked_books.forEach(book => {
-                const bookDiv = document.createElement('div');
-                bookDiv.innerHTML = `
-                    <h3>${book.volumeInfo.title}</h3>
-                    <p>Author: ${book.volumeInfo.authors ? book.volumeInfo.authors.join(', ') : 'N/A'}</p>
-                `;
-                likedBooksDiv.appendChild(bookDiv);
-            });
-        }
+        // // Function to display liked books
+        // function displayLikedBooks(data) {
+        //     const likedBooksDiv = document.getElementById('likedBooks');
+        //     likedBooksDiv.innerHTML = '<h2>Liked Books</h2>';
+        //     data.liked_books.forEach(book => {
+        //         const bookDiv = document.createElement('div');
+        //         bookDiv.innerHTML = `
+        //             <h3>${book.volumeInfo.title}</h3>
+        //             <p>Author: ${book.volumeInfo.authors ? book.volumeInfo.authors.join(', ') : 'N/A'}</p>
+        //         `;
+        //         likedBooksDiv.appendChild(bookDiv);
+        //     });
+        // }
 
-        // Function to view favorite books
-        async function viewFavoriteBooks() {
-            const response = await fetch('/favorite_books');
-            const data = await response.json();
-            displayFavoriteBooks(data);
-        }
+        // // Function to view favorite books
+        // async function viewFavoriteBooks() {
+        //     const response = await fetch('/favorite_books');
+        //     const data = await response.json();
+        //     displayFavoriteBooks(data);
+        // }
 
-        // Function to display favorite books
-        function displayFavoriteBooks(data) {
-            const favoriteBooksDiv = document.getElementById('favoriteBooks');
-            favoriteBooksDiv.innerHTML = '<h2>Favorite Books</h2>';
-            data.favorite_books.forEach(book => {
-                const bookDiv = document.createElement('div');
-                bookDiv.innerHTML = `
-                    <h3>${book.volumeInfo.title}</h3>
-                    <p>Author: ${book.volumeInfo.authors ? book.volumeInfo.authors.join(', ') : 'N/A'}</p>
-                `;
-                favoriteBooksDiv.appendChild(bookDiv);
-            });
-        }
+        // // Function to display favorite books
+        // function displayFavoriteBooks(data) {
+        //     const favoriteBooksDiv = document.getElementById('favoriteBooks');
+        //     favoriteBooksDiv.innerHTML = '<h2>Favorite Books</h2>';
+        //     data.favorite_books.forEach(book => {
+        //         const bookDiv = document.createElement('div');
+        //         bookDiv.innerHTML = `
+        //             <h3>${book.volumeInfo.title}</h3>
+        //             <p>Author: ${book.volumeInfo.authors ? book.volumeInfo.authors.join(', ') : 'N/A'}</p>
+        //         `;
+        //         favoriteBooksDiv.appendChild(bookDiv);
+        //     });
+        // }
     </script>
 </body>
 </html>
