@@ -1,182 +1,357 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Book Recommendation System</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://kit.fontawesome.com/89a66043fb.js" crossorigin="anonymous"></script>
-</head>
-<body>
+    <script
+      src="https://kit.fontawesome.com/89a66043fb.js"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
     <div class="w-screen h-screen bg-gray-100 py-10">
-        <div class="relative w-1/2 m-auto min-h-[500px] bg-gray-50 p-5 rounded-lg shadow-sm">
-            <h1 class="text-center text-4xl font-bold">Book Recommendation System</h1>
+      <div
+        class="relative w-1/2 m-auto min-h-[500px] bg-gray-50 p-5 rounded-lg shadow-sm"
+      >
+        <h1 class="text-center text-4xl font-bold">
+          Book Recommendation System
+        </h1>
 
-            <div class="flex justify-center mt-4 w-[90%] m-auto gap-2">
-                <form id="searchBar" class="flex border-2 border-gray-200 bg-white w-full rounded-md">
-                    <input type="text" id="query" placeholder="Enter book title or author" class="p-2 px-4 rounded-md flex-1 focus:outline-none focus:border-blue-500" required>
-                    <button type="submit" class="flex items-center justify-center rounedd-md bg-white px-4 py-2 mx-1"><i class="fa fa-search" aria-hidden="true"></i></button>
-                </form>
-                <button class="flex items-center justify-between gap-2 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600" ><i class="fa fa-heart-o" aria-hidden="true"></i></button>
-                <button class="flex items-center justify-between gap-2 bg-pink-500 text-white px-4 py-2 rounded-md hover:bg-pink-600" ><i class="fa fa-bookmark-o" aria-hidden="true"></i></button>
-
-            </div>
-
-            <div id="results" class="relative mt-4 w-[90%]  m-auto">
-                <h1 id="searchText" class="text-xl font-bold mb-2 mt-6">Search Results for: </h1>
-                <ul id="result-box" class="max-h-[70vh] overflow-auto">
-                </ul>
-            </div>
+        <div class="flex justify-center mt-4 w-[90%] m-auto gap-2">
+          <form
+            id="searchBar"
+            class="flex border-2 border-gray-200 bg-white w-full rounded-md"
+          >
+            <input
+              type="text"
+              id="query"
+              placeholder="Enter book title or author"
+              class="p-2 px-4 rounded-md flex-1 focus:outline-none focus:border-blue-500"
+              required
+            />
+            <button
+              type="submit"
+              class="flex items-center justify-center rounedd-md bg-white px-4 py-2 mx-1"
+            >
+              <i class="fa fa-search" aria-hidden="true"></i>
+            </button>
+          </form>
+          <button
+            class="flex items-center justify-between gap-2 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+            onclick="viewLikedBooks()"
+          >
+            <i class="fa fa-heart-o" aria-hidden="true"></i>
+          </button>
+          <button
+            class="flex items-center justify-between gap-2 bg-pink-500 text-white px-4 py-2 rounded-md hover:bg-pink-600"
+            onclick="viewFavBooks()"
+          >
+            <i class="fa fa-bookmark-o" aria-hidden="true"></i>
+          </button>
         </div>
+
+        <div id="results" class="relative mt-4 w-[90%] m-auto">
+          <h1 id="searchText" class="text-xl font-semibold mb-2 mt-6">
+            Search the book or view your read later
+          </h1>
+          <ul id="result-box" class="max-h-[70vh] py-2 overflow-auto"></ul>
+        </div>
+      </div>
     </div>
-    <!-- <h1>Search for Books</h1>
-    <form id="searchForm">
-        <input type="text" id="query" placeholder="Enter book title or author" required>
-        <button type="submit">Search</button>
-    </form>
-
-    <h2>Actions</h2>
-    <button onclick="viewLikedBooks()">View Liked Books</button>
-    <button onclick="viewFavoriteBooks()">View Favorite Books</button>
-
-    <div id="results"></div>
-    <div id="likedBooks"></div>
-    <div id="favoriteBooks"></div> -->
 
     <script>
-        // Function to handle search form submission
-        document.querySelector('#searchBar').addEventListener('submit', async function(event) {
-            event.preventDefault();
-            const query = document.getElementById('query').value;
-            document.querySelector("#searchText").innerHTML = `Search Results for: ${query}`;
+      const resultBox = document.querySelector("#result-box");
+      const searchText = document.querySelector("#searchText");
+      const loader = `
+            <li role="status" class='flex items-center justify-center'>
+                <svg aria-hidden="true" class="w-8 h-8 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
+                    <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="currentFill"/>
+                </svg>
+                <span class="sr-only">Loading...</span>
+            </li>
+        `;
+
+      // Function to handle search form submission
+      document
+        .querySelector("#searchBar")
+        .addEventListener("submit", async function (event) {
+          event.preventDefault();
+          try {
+            resultBox.innerHTML = loader;
+            const query = document.getElementById("query").value;
+            searchText.innerHTML = `Search Results for: ${query}`;
             const response = await fetch(`/search?query=${query}`);
             const data = await response.json();
             console.log(data);
-            
+
             displayResults(data);
+          } catch (err) {
+            resultBox.innerHTML = ``;
+            searchText.innerHTML = `Search the book or view your read later`;
+            console.log(err);
+
+            alert("Something unexpected happened at search! Try again.");
+          }
         });
 
-        // Function to display search results
-        function displayResults(data) {
-            const resultBox = document.querySelector('#result-box');
-            resultBox.innerHTML = '';
-            if (data.items) {
-                data.items.forEach(({volumeInfo, accessInfo, id, liked, favorite}) => {
-                    const bookItem = document.createElement('li')
-                    bookItem.setAttribute('class', 'my-2')
-                    bookItem.innerHTML = `
+      // Function to display search results
+      const displayResults = (data) => {
+        resultBox.innerHTML = "";
+        if (data.items) {
+          data.items.forEach(
+            ({ volumeInfo, accessInfo, id, liked, favorite }) => {
+              const bookItem = document.createElement("li");
+              bookItem.setAttribute("class", "my-2");
+
+              bookItem.innerHTML = `
                             <div class="flex border-b-2 py-2">
-                                <img class="w-[180px] h-[180px] object-contain" src="${volumeInfo.imageLinks.smallThumbnail}" alt="${volumeInfo.title}">
+                                <img class="w-[180px] h-[180px] object-contain" src="${
+                                  volumeInfo["imageLinks"]
+                                    ? volumeInfo.imageLinks.smallThumbnail
+                                    : "/static/img-nf.png"
+                                }" alt="${volumeInfo.title}">
                                 <div class="flex flex-1 justify-start relative">
                                     <div class="content flex-1 relative">
-                                        <h2 class="font-semibold text-[25px] leading-none text-wrap max-w-[80%]">${volumeInfo.title}</h2>
+                                        <h2 class="font-semibold text-[25px] leading-none text-wrap max-w-[80%]">${
+                                          volumeInfo.title
+                                        }</h2>
                                         <p class="font-medium text-[15px] text-[#464646] mb-2">${
-                                            volumeInfo.authors.join(', ')
-                                            }</p>
+                                          volumeInfo.authors
+                                            ? volumeInfo.authors.join(", ")
+                                            : "No Author Found"
+                                        }</p>
                                         <div class="flex gap-1  flex-wrap">
                                             ${
-                                                volumeInfo['categories'] ?
-                                                    volumeInfo.categories.map(category => `<span class="bg-pink-500 rounded-[10pc] px-[9px] py-[2px] text-[13px] text-white">${category}</span>`)
-                                                    : `<span class="bg-red-500 rounded-[10pc] px-[9px] py-[2px] text-[13px] text-white">No Category Found</span>`
-                                                   
+                                              volumeInfo["categories"]
+                                                ? volumeInfo.categories.map(
+                                                    (category) =>
+                                                      `<span class="bg-pink-500 rounded-[10pc] px-[9px] py-[2px] text-[13px] text-white">${category}</span>`
+                                                  )
+                                                : `<span class="bg-red-500 rounded-[10pc] px-[9px] py-[2px] text-[13px] text-white">No Category Found</span>`
                                             }
                                         </div>
-                                        <p class="text-[15px] mt-2">${volumeInfo.description ? volumeInfo.description.slice(0, 150) + '...' : "No Description"}</p>
+                                        <p class="text-[15px] mt-2">${
+                                          volumeInfo.description
+                                            ? volumeInfo.description.slice(
+                                                0,
+                                                150
+                                              ) + "..."
+                                            : "No Description"
+                                        }</p>
                                         <div class="flex gap-2 mt-2">
-                                            <button class="flex items-center gap-2 bg-blue-500 px-4 py-2 text-white rounded-md hover:bg-blue-600" ><i class="fa fa-heart-o" aria-hidden="true"></i>Like</button>
-                                            <button class="flex items-center gap-2 bg-pink-500 px-4 py-2 text-white rounded-md hover:bg-pink-600" ><i class="fa fa-bookmark-o" aria-hidden="true"></i>Read Later</button>
+                                            <button 
+                                                class="flex items-center gap-2 bg-blue-500 px-4 py-2 text-white rounded-md hover:bg-blue-600"
+                                                onclick="addToLikes('${id}')"
+                                            >
+                                                <i class="fa fa-heart-o" aria-hidden="true"></i>
+                                                Like
+                                            </button>
+                                            <button 
+                                                class="flex items-center gap-2 bg-pink-500 px-4 py-2 text-white rounded-md hover:bg-pink-600"
+                                                onclick="addToFavorites('${id}')"
+                                            >
+                                                <i class="fa fa-bookmark-o" aria-hidden="true"></i>
+                                                Read Later
+                                            </button>
                                         </div>
                                     </div>
                                     <div class="absolute top-0 right-0 flex gap-2">
-                                        <a href="${accessInfo.webReaderLink}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 bg-gray-200 w-[40px] h-[40px] text-white rounded-[50%] hover:bg-gray-300" >
+                                        <a href="${
+                                          accessInfo.webReaderLink
+                                        }" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 bg-gray-200 w-[40px] h-[40px] text-white rounded-[50%] hover:bg-gray-300" >
                                             <i class="fa-brands fa-google-play text-black"></i>
                                         </a>
-                                        <a href="${volumeInfo.infoLink}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 bg-gray-200 w-[40px] h-[40px] text-white rounded-[50%] hover:bg-gray-300" >
+                                        <a href="${
+                                          volumeInfo.infoLink
+                                        }" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 bg-gray-200 w-[40px] h-[40px] text-white rounded-[50%] hover:bg-gray-300" >
                                             <i class="fa-solid fa-book text-black"></i>
                                         </a>
                                     </div>
                                     
                                 </div>
                             </div>
-                    `
-                    resultBox.appendChild(bookItem)
-                })
-            } else {
-                resultBox.innerHTML = '<p>No results found.</p>';
+                    `;
+              resultBox.appendChild(bookItem);
             }
+          );
+        } else {
+          resultBox.innerHTML = "<p>No results found.</p>";
         }
-        
+      };
 
-        // // Function to like a book
-        // async function likeBook(bookId) {
-        //     await fetch('/like', {
-        //         method: 'POST',
-        //         headers: { 'Content-Type': 'application/json' },
-        //         body: JSON.stringify({ book_id: bookId })
-        //     });
-        //     alert('Book liked!');
-        //     // Refresh the results to show updated like status
-        //     const query = document.getElementById('query').value;
-        //     const response = await fetch(`/search?query=${query}`);
-        //     const data = await response.json();
-        //     displayResults(data);
-        // }
+      const viewFavBooks = async () => {
+        try {
+          resultBox.innerHTML = loader;
+          searchText.innerHTML = `Your Saved Book`;
+          const savedBooksId = window.localStorage.getItem("favorites");
 
-        // // Function to favorite a book
-        // async function favoriteBook(bookId) {
-        //     await fetch('/favorite', {
-        //         method: 'POST',
-        //         headers: { 'Content-Type': 'application/json' },
-        //         body: JSON.stringify({ book_id: bookId })
-        //     });
-        //     alert('Book added to favorites!');
-        //     // Refresh the results to show updated favorite status
-        //     const query = document.getElementById('query').value;
-        //     const response = await fetch(`/search?query=${query}`);
-        //     const data = await response.json();
-        //     displayResults(data);
-        // }
+          if (!savedBooksId) {
+            return (resultBox.innerHTML = `<li class='my-2'><p>No saved book found.</p></li>`);
+          }
+          const ids = savedBooksId.split(",");
+          const res = await fetch("/booksById", {
+            method: "POST",
+            body: JSON.stringify({ ids }),
+            headers: { "Content-Type": "application/json" },
+          });
+          const data = await res.json();
+          displayFavOrLikes(data);
+        } catch (error) {
+          resultBox.innerHTML = ``;
+          console.log(error);
+          alert("Something unexpected happened! Try again.");
+        }
+      };
+      const viewLikedBooks = async () => {
+        try {
+          resultBox.innerHTML = loader;
+          searchText.innerHTML = `Your Liked Book`;
+          const savedBooksId = window.localStorage.getItem("likes");
 
-        // // Function to view liked books
-        // async function viewLikedBooks() {
-        //     const response = await fetch('/liked_books');
-        //     const data = await response.json();
-        //     displayLikedBooks(data);
-        // }
+          if (!savedBooksId) {
+            return (resultBox.innerHTML = `<li class='my-2'><p>No liked book found.</p></li>`);
+          }
+          const ids = savedBooksId.split(",");
+          const res = await fetch("/booksById", {
+            method: "POST",
+            body: JSON.stringify({ ids }),
+            headers: { "Content-Type": "application/json" },
+          });
+          const data = await res.json();
+          displayFavOrLikes(data);
+        } catch (error) {
+          resultBox.innerHTML = ``;
+          console.log(error);
+          alert("Something unexpected happened at likes! Try again.");
+        }
+      };
 
-        // // Function to display liked books
-        // function displayLikedBooks(data) {
-        //     const likedBooksDiv = document.getElementById('likedBooks');
-        //     likedBooksDiv.innerHTML = '<h2>Liked Books</h2>';
-        //     data.liked_books.forEach(book => {
-        //         const bookDiv = document.createElement('div');
-        //         bookDiv.innerHTML = `
-        //             <h3>${book.volumeInfo.title}</h3>
-        //             <p>Author: ${book.volumeInfo.authors ? book.volumeInfo.authors.join(', ') : 'N/A'}</p>
-        //         `;
-        //         likedBooksDiv.appendChild(bookDiv);
-        //     });
-        // }
+      const displayFavOrLikes = (data) => {
+        resultBox.innerHTML = "";
+        likes = window.localStorage.getItem("likes")
+          ? window.localStorage.getItem("likes").split(",")
+          : [];
+        favorites = window.localStorage.getItem("favorites")
+          ? window.localStorage.getItem("favorites").split(",")
+          : [];
+        data.forEach(({ volumeInfo, accessInfo, id }) => {
+          const bookItem = document.createElement("li");
+          bookItem.setAttribute("class", "my-2");
+          bookItem.innerHTML = `
+                        <div class="flex border-b-2 py-2">
+                            <img class="w-[180px] h-[180px] object-contain" src="${
+                              volumeInfo["imageLinks"]
+                                ? volumeInfo.imageLinks.smallThumbnail
+                                : "/static/img-nf.png"
+                            }" alt="${volumeInfo.title}">
+                            <div class="flex flex-1 justify-start relative">
+                                <div class="content flex-1 relative">
+                                    <h2 class="font-semibold text-[25px] leading-none text-wrap max-w-[80%]">${
+                                      volumeInfo.title
+                                    }</h2>
+                                    <p class="font-medium text-[15px] text-[#464646] mb-2">${volumeInfo.authors.join(
+                                      ", "
+                                    )}</p>
+                                    <div class="flex gap-1 flex-wrap">
+                                        ${
+                                          volumeInfo["categories"]
+                                            ? volumeInfo.categories
+                                                .map(
+                                                  (category) =>
+                                                    `<span class="bg-pink-500 rounded-[10pc] px-[9px] py-[2px] text-[13px] text-white">${category}</span>`
+                                                )
+                                                .join("")
+                                            : `<span class="bg-red-500 rounded-[10pc] px-[9px] py-[2px] text-[13px] text-white">No Category Found</span>`
+                                        }
+                                    </div>
+                                    <p class="text-[15px] mt-2">${
+                                      volumeInfo.description
+                                        ? volumeInfo.description.slice(0, 150) +
+                                          "..."
+                                        : "No Description"
+                                    }</p>
+                                    <div class="flex gap-2 mt-2">
+                                        <button 
+                                            class="flex items-center gap-2 bg-blue-500 px-4 py-2 text-white rounded-md hover:bg-blue-600"
+                                            onclick="removeFromLikes('${id}')"
+                                        >
+                                            <i class="fa ${
+                                              likes.includes(id)
+                                                ? "fa-heart"
+                                                : "fa-heart-o"
+                                            }" aria-hidden="true"></i>
+                                            Like
+                                        </button>
+                                        <button 
+                                                class="flex items-center gap-2 bg-pink-500 px-4 py-2 text-white rounded-md hover:bg-pink-600"
+                                                onclick="removeFromFavorites('${id}')"
+                                            >
+                                                <i class="fa ${
+                                                  favorites.includes(id)
+                                                    ? "fa-bookmark"
+                                                    : "fa-bookmark-o"
+                                                }" aria-hidden="true"></i>
+                                                Read Later
+                                            </button>
+                                    </div>
+                                </div>
+                                <div class="absolute top-0 right-0 flex gap-2">
+                                    <a href="${
+                                      accessInfo.webReaderLink
+                                    }" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 bg-gray-200 w-[40px] h-[40px] text-white rounded-[50%] hover:bg-gray-300" >
+                                        <i class="fa-brands fa-google-play text-black"></i>
+                                    </a>
+                                    <a href="${
+                                      volumeInfo.infoLink
+                                    }" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 bg-gray-200 w-[40px] h-[40px] text-white rounded-[50%] hover:bg-gray-300" >
+                                        <i class="fa-solid fa-book text-black"></i>
+                                    </a>
+                                </div>
+                                
+                            </div>
+                        </div>
+                `;
+          resultBox.appendChild(bookItem);
+        });
+      };
 
-        // // Function to view favorite books
-        // async function viewFavoriteBooks() {
-        //     const response = await fetch('/favorite_books');
-        //     const data = await response.json();
-        //     displayFavoriteBooks(data);
-        // }
+      const addToFavorites = (id) => {
+        const newFavs = window.localStorage.getItem("favorites")
+          ? window.localStorage.getItem("favorites").split(",").concat(id)
+          : [id];
 
-        // // Function to display favorite books
-        // function displayFavoriteBooks(data) {
-        //     const favoriteBooksDiv = document.getElementById('favoriteBooks');
-        //     favoriteBooksDiv.innerHTML = '<h2>Favorite Books</h2>';
-        //     data.favorite_books.forEach(book => {
-        //         const bookDiv = document.createElement('div');
-        //         bookDiv.innerHTML = `
-        //             <h3>${book.volumeInfo.title}</h3>
-        //             <p>Author: ${book.volumeInfo.authors ? book.volumeInfo.authors.join(', ') : 'N/A'}</p>
-        //         `;
-        //         favoriteBooksDiv.appendChild(bookDiv);
-        //     });
-        // }
+        window.localStorage.setItem("favorites", newFavs);
+        window.alert("Added to favorites!!!");
+      };
+
+      const removeFromFavorites = (id) => {
+        if (!window.localStorage.getItem("favorites")) return;
+        const prevFavs = window.localStorage.getItem("favorites").split(",");
+        const newFavs = prevFavs.filter((fav) => fav.trim() !== id);
+        window.localStorage.setItem("favorites", newFavs);
+        window.alert("Removed from favorites!!!");
+        window.href = "/";
+      };
+
+      const addToLikes = (id) => {
+        const newFavs = window.localStorage.getItem("likes")
+          ? window.localStorage.getItem("likes").split(",").concat(id)
+          : [id];
+
+        window.localStorage.setItem("likes", newFavs);
+        window.alert("Added to likes!!!");
+      };
+
+      const removeFromLikes = (id) => {
+        if (!window.localStorage.getItem("likes")) return;
+        const prevFavs = window.localStorage.getItem("likes").split(",");
+        const newFavs = prevFavs.filter((fav) => fav.trim() !== id);
+        window.localStorage.setItem("likes", newFavs);
+        window.alert("Removed from likes!!!");
+        window.href = "/";
+      };
     </script>
-</body>
+  </body>
 </html>
