@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Book Recommendation System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      src="https://kit.fontawesome.com/89a66043fb.js"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <div class="w-screen h-screen bg-gray-100 py-10">
+      <div
+        class="relative w-1/2 m-auto min-h-[500px] bg-gray-50 p-5 rounded-lg shadow-sm"
+      >
+        {%extends "navbar.html" %} 
+        {%block content%} 
+
+        <div id="results" class="relative mt-4 w-[90%] m-auto">
+          <h1 id="searchText" class="text-xl font-semibold mb-2 mt-6">
+            Your Saved Book
+          </h1>
+          <ul id="result-box" class="max-h-[60vh] py-2 overflow-auto">
+          </ul>
+        </div>
+      </div>
+    </div>
+  </body>
+
+  <script src="/static/utils.js" ></script>
+  <script>
+    const resultBox = document.querySelector("#result-box");
+
+    const viewLikedBooks = async () => {
+        try {
+          resultBox.innerHTML = loader;
+          searchText.innerHTML = `Your Liked Book`;
+          const savedBooksId = window.localStorage.getItem("likes");
+
+          if (!savedBooksId) {
+            return (resultBox.innerHTML = `<li class='my-2'><p>No liked book found.</p></li>`);
+          }
+          const ids = savedBooksId.split(",");
+          const res = await fetch("/booksById", {
+            method: "POST",
+            body: JSON.stringify({ ids }),
+            headers: { "Content-Type": "application/json" },
+          });
+          const data = await res.json();
+          
+          displayFavOrLikes(data);
+        } catch (error) {
+          resultBox.innerHTML = ``;
+          console.log(error);
+          alert("Something unexpected happened at likes! Try again.");
+        }
+      };
+
+
+      viewLikedBooks()
+
+    
+  </script>
+</html>
+
+{% endblock %}

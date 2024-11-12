@@ -1,0 +1,54 @@
+<div class="flex flex-col items-center gap-2 mb-7">
+  <a href="/">
+    <img src="/static/logo.svg" alt="logo" class="w-[200px]" />
+  </a>
+</div>
+
+<div class="flex justify-center mt-4 w-[90%] m-auto gap-2">
+  <form
+    id="searchBar"
+    class="flex border-2 border-gray-200 bg-white w-full rounded-md"
+    method="GET"
+    action="/search"
+    enctype="multipart/form-data"
+  >
+    <input
+      type="text"
+      id="query"
+      placeholder="Enter book title or author"
+      class="p-2 px-4 rounded-md flex-1 focus:outline-none focus:border-blue-500"
+      required
+      name="query"
+    />
+    <button
+      type="submit"
+      class="flex items-center justify-center rounedd-md bg-white px-4 py-2 mx-1"
+    >
+      <i class="fa fa-search" aria-hidden="true"></i>
+    </button>
+  </form>
+  <button
+    class="flex items-center justify-between gap-2 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+  >
+    <a href="{{ url_for('likes') }}">
+      <i class="fa fa-heart-o" aria-hidden="true"></i>
+    </a>
+  </button>
+  <button
+    class="flex items-center justify-between gap-2 bg-pink-500 text-white px-4 py-2 rounded-md hover:bg-pink-600"
+  >
+    <a href="{{ url_for('favorites') }}">
+      <i class="fa fa-bookmark-o" aria-hidden="true"></i>
+    </a>
+  </button>
+  <button
+    class="flex items-center justify-between gap-2 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
+  >
+    <a href="{{ url_for('addBook') }}">
+      <i class="fa-solid fa-plus"></i>
+    </a>
+  </button>
+</div>
+
+{% block content %} 
+{% endblock %} 

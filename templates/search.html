@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Book Recommendation System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      src="https://kit.fontawesome.com/89a66043fb.js"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <div class="w-screen h-screen bg-gray-100 py-10">
+      <div
+        class="relative w-1/2 m-auto min-h-[500px] bg-gray-50 p-5 rounded-lg shadow-sm"
+      >
+        {%extends "navbar.html" %} 
+        {%block content%} 
+
+        <div id="results" class="relative mt-4 w-[90%] m-auto">
+          <h1 id="searchText" class="text-xl font-semibold mb-2 mt-6">
+            Search Results for: {{search_query}}
+          </h1>
+          <ul id="result-box" class="max-h-[60vh] py-2 overflow-auto">
+            {% for book in books['items'] %}
+
+                <li class="my-2">
+                    <div class="flex border-b-2 py-2">
+                        
+                        <img class="w-[180px] h-[180px] object-contain" src="{{ get_image(book['volumeInfo']) }}" alt="{{book['volumeInfo']['title']}}">
+                       
+                        <div class="flex flex-1 justify-start relative">
+                            <div class="content flex-1 relative">
+                                <h2 class="font-semibold text-[25px] leading-none text-wrap max-w-[80%]">
+                                  {{book['volumeInfo']['title']}}
+                                </h2>
+                                <p class="font-medium text-[15px] text-[#464646] mb-2">
+                                    {{get_authors(book['volumeInfo']['authors'])}}
+                                </p>
+                                <div class="flex gap-1  flex-wrap">
+                                    {% if (book['volumeInfo']['categories']) %}
+                                        {% for cat in book['volumeInfo']['categories'] %}
+                                        <span class="bg-pink-500 rounded-[10pc] px-[9px] py-[2px] text-[13px] text-white">{{cat}}</span>
+                                        {% endfor %}
+                                    {% else %}
+                                    <span class="bg-red-500 rounded-[10pc] px-[9px] py-[2px] text-[13px] text-white">No Category Found</span>
+                                    {% endif %}
+                                </div>
+                                <p class="text-[15px] mt-2">
+                                    {{ get_desc(book['volumeInfo']['description']) }}
+                                </p>
+                                <div class="flex gap-2 mt-2">
+                                    <button 
+                                        class="flex items-center gap-2 bg-blue-500 px-4 py-2 text-white rounded-md hover:bg-blue-600"
+                                        onclick="addToLikes(`{{book['id']}}`)"
+                                    >
+                                        <i class="fa fa-heart-o "  aria-hidden="true"></i>
+                                        Like
+                                    </button>
+                                    <button 
+                                        class="flex items-center gap-2 bg-pink-500 px-4 py-2 text-white rounded-md hover:bg-pink-600"
+                                        onclick="addToFavorites(`{{book['id']}}`)"
+                                    >
+                                        <i class="fa fa-bookmark-o" aria-hidden="true"></i>
+                                        Read Later
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="absolute top-0 right-1 flex gap-2">
+                              {% if (book['customBook']) %}
+                                <a href="{{book['volumeInfo']['infoLink']}}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 bg-gray-200 w-[40px] h-[40px] text-white rounded-[50%] hover:bg-gray-300" >
+                                  <i class="fa-solid fa-link text-black"></i>
+                                </a>
+                              {% else %}
+                                <a href="{{book['accessInfo']['webReaderLink']}}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 bg-gray-200 w-[40px] h-[40px] text-white rounded-[50%] hover:bg-gray-300" >
+                                    <i class="fa-brands fa-google-play text-black"></i>
+                                </a>
+                                <a href="{{book['volumeInfo']['infoLink']}}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 bg-gray-200 w-[40px] h-[40px] text-white rounded-[50%] hover:bg-gray-300" >
+                                    <i class="fa-solid fa-book text-black"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            {% endfor %}
+
+          </ul>
+        </div>
+      </div>
+    </div>
+  </body>
+
+  <script src="/static/utils.js"></script>
+</html>
+
+{% endblock %}
